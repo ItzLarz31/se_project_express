@@ -1,5 +1,3 @@
-const _id = "123";
-
 module.exports = {
   env: {
     es2021: true,
@@ -25,5 +23,6 @@ module.exports = {
   },
   rules: {
     "no-underscore-dangle": ["error", { allow: ["_id"] }],
+    "no-console": "off",
   },
 };

@@ -11,7 +11,7 @@ const getClothingItems = (req, res) => {
     .then((clothingItems) => res.status(200).send(clothingItems))
     .catch((err) => {
       console.error(err);
-      res
+      return res
         .status(DEFAULT_ERROR)
         .send({ message: "An error has occurred on the server" });
     });
@@ -27,7 +27,7 @@ const createClothingItem = (req, res) => {
       if (err.name === "ValidationError") {
         return res.status(VALIDATION_ERROR).send({ message: "Invalid data" });
       }
-      res
+      return res
         .status(DEFAULT_ERROR)
         .send({ message: "An error has occurred on the server" });
     });
@@ -50,7 +50,7 @@ const getClothingItemById = (req, res) => {
       if (err.name === "CastError") {
         return res.status(CAST_ERROR).send({ message: "Invalid id" });
       }
-      res
+      return res
         .status(DEFAULT_ERROR)
         .send({ message: "An error has occurred on the server" });
     });
@@ -71,7 +71,7 @@ const likeItem = (req, res) => {
           .status(DOCUMENT_NOT_FOUND_ERROR)
           .send({ message: "Requested resource not found" });
       }
-      res.status(200).send(clothingItem);
+      return res.status(200).send(clothingItem);
     })
     .catch((err) => {
       console.error(err);
@@ -83,7 +83,7 @@ const likeItem = (req, res) => {
       if (err.name === "CastError") {
         return res.status(CAST_ERROR).send({ message: "Invalid id" });
       }
-      res
+      return res
         .status(DEFAULT_ERROR)
         .send({ message: "An error has occurred on the server" });
     });
@@ -104,7 +104,7 @@ const dislikeItem = (req, res) => {
           .status(DOCUMENT_NOT_FOUND_ERROR)
           .send({ message: "Requested resource not found" });
       }
-      res.status(200).send(clothingItem);
+      return res.status(200).send(clothingItem);
     })
     .catch((err) => {
       console.error(err);
@@ -116,7 +116,7 @@ const dislikeItem = (req, res) => {
       if (err.name === "CastError") {
         return res.status(CAST_ERROR).send({ message: "Invalid id" });
       }
-      res
+      return res
         .status(DEFAULT_ERROR)
         .send({ message: "An error has occurred on the server" });
     });
@@ -132,7 +132,7 @@ const deleteItemById = (req, res) => {
           .status(DOCUMENT_NOT_FOUND_ERROR)
           .send({ message: "Requested resource not found" });
       }
-      res.status(200).send(clothingItem);
+      return res.status(200).send(clothingItem);
     })
     .catch((err) => {
       console.error(err);
@@ -144,7 +144,7 @@ const deleteItemById = (req, res) => {
       if (err.name === "CastError") {
         return res.status(CAST_ERROR).send({ message: "Invalid id" });
       }
-      res
+      return res
         .status(DEFAULT_ERROR)
         .send({ message: "An error has occurred on the server" });
     });
