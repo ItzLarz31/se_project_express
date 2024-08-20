@@ -1,27 +1,16 @@
-const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+
+const User = require("../models/user");
 const { JWT_SECRET } = require("../utils/config");
 
 const {
   DOCUMENT_NOT_FOUND_ERROR,
-  CAST_ERROR,
   VALIDATION_ERROR,
   DEFAULT_ERROR,
   UNAUTHORIZED_ERROR,
   REQUEST_CONFLICT,
 } = require("../utils/errors");
-
-const getUsers = (req, res) => {
-  User.find({})
-    .then((users) => res.status(200).send(users))
-    .catch((err) => {
-      console.error(err);
-      res
-        .status(DEFAULT_ERROR)
-        .send({ message: "An error has occurred on the server" });
-    });
-};
 
 const createUser = async (req, res) => {
   const { name, avatar, email, password } = req.body;
@@ -36,14 +25,6 @@ const createUser = async (req, res) => {
   }
 
   try {
-    const existingUser = await User.findOne({ email });
-
-    if (existingUser) {
-      return res
-        .status(REQUEST_CONFLICT)
-        .send({ message: "User with this email already exists" });
-    }
-
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await User.create({
@@ -72,29 +53,6 @@ const createUser = async (req, res) => {
   }
 };
 
-const getUserById = (req, res) => {
-  const { userId } = req.params;
-  User.findById(userId)
-    .orFail()
-    .then((user) => {
-      res.status(200).send(user);
-    })
-    .catch((err) => {
-      console.error(err);
-      if (err.name === "DocumentNotFoundError") {
-        return res
-          .status(DOCUMENT_NOT_FOUND_ERROR)
-          .send({ message: "Requested resource not found" });
-      }
-      if (err.name === "CastError") {
-        return res.status(CAST_ERROR).send({ message: "Invalid id" });
-      }
-      return res
-        .status(DEFAULT_ERROR)
-        .send({ message: "An error has occurred on the server" });
-    });
-};
-
 const signIn = (req, res) => {
   const { email, password } = req.body;
 
@@ -105,7 +63,7 @@ const signIn = (req, res) => {
       .send({ message: "Email and password are required" });
   }
 
-  User.findUserByCredentials(email, password)
+  return User.findUserByCredentials(email, password) // Add return here
     .then((user) => {
       console.log("user object from the login controller", user);
 
@@ -122,7 +80,7 @@ const signIn = (req, res) => {
 
       if (err.message === "Incorrect password or email") {
         return res
-          .status(VALIDATION_ERROR)
+          .status(UNAUTHORIZED_ERROR)
           .send({ message: "Incorrect password or email" });
       }
 
@@ -182,9 +140,7 @@ const modifyUserData = async (req, res) => {
 };
 
 module.exports = {
-  getUsers,
   createUser,
-  getUserById,
   signIn,
   getCurrentUser,
   modifyUserData,

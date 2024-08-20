@@ -136,18 +136,15 @@ const deleteItemById = (req, res) => {
           .send({ message: "Requested resource not found" });
       }
 
-      // Check if the logged-in user is the owner of the item
       if (clothingItem.owner.toString() !== userId.toString()) {
         return res
           .status(FORBIDDEN_ERROR)
           .send({ message: "You are not authorized to delete this item" });
       }
 
-      // If the user is the owner, proceed to delete the item
-      return ClothingItem.findByIdAndDelete(itemId);
-    })
-    .then((deletedItem) => {
-      return res.status(200).send(deletedItem);
+      return ClothingItem.findByIdAndDelete(itemId).then((deletedItem) =>
+        res.status(200).send(deletedItem)
+      );
     })
     .catch((err) => {
       console.error(err);
