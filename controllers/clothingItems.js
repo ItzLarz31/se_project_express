@@ -4,6 +4,7 @@ const {
   CAST_ERROR,
   VALIDATION_ERROR,
   DEFAULT_ERROR,
+  FORBIDDEN_ERROR,
 } = require("../utils/errors");
 
 const getClothingItems = (req, res) => {
@@ -124,7 +125,9 @@ const dislikeItem = (req, res) => {
 
 const deleteItemById = (req, res) => {
   const { itemId } = req.params;
-  ClothingItem.findByIdAndDelete(itemId)
+  const userId = req.user._id;
+
+  ClothingItem.findById(itemId)
     .orFail()
     .then((clothingItem) => {
       if (!clothingItem) {
@@ -132,7 +135,19 @@ const deleteItemById = (req, res) => {
           .status(DOCUMENT_NOT_FOUND_ERROR)
           .send({ message: "Requested resource not found" });
       }
-      return res.status(200).send(clothingItem);
+
+      // Check if the logged-in user is the owner of the item
+      if (clothingItem.owner.toString() !== userId.toString()) {
+        return res
+          .status(FORBIDDEN_ERROR)
+          .send({ message: "You are not authorized to delete this item" });
+      }
+
+      // If the user is the owner, proceed to delete the item
+      return ClothingItem.findByIdAndDelete(itemId);
+    })
+    .then((deletedItem) => {
+      return res.status(200).send(deletedItem);
     })
     .catch((err) => {
       console.error(err);
