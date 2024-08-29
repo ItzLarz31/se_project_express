@@ -27,3 +27,7 @@ These technologies and techniques work together to create a robust and efficient
 `npm run start` — to launch the server
 
 `npm run dev` — to launch the server with the hot reload feature
+
+## Live View
+
+If you want to see the project running live, here is the link to it. https://wtwrlarz.twilightparadox.com/
