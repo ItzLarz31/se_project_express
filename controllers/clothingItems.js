@@ -1,24 +1,19 @@
 const ClothingItem = require("../models/clothingItem");
-const {
-  DOCUMENT_NOT_FOUND_ERROR,
-  CAST_ERROR,
-  VALIDATION_ERROR,
-  DEFAULT_ERROR,
-  FORBIDDEN_ERROR,
-} = require("../utils/errors");
 
-const getClothingItems = (req, res) => {
+const BadRequestError = require("../errors/BadRequestError");
+const ForbiddenError = require("../errors/ForbiddenError");
+const NotFoundError = require("../errors/NotFoundError");
+
+const getClothingItems = (req, res, next) => {
   ClothingItem.find({})
     .then((clothingItems) => res.status(200).send(clothingItems))
     .catch((err) => {
       console.error(err);
-      return res
-        .status(DEFAULT_ERROR)
-        .send({ message: "An error has occurred on the server" });
+      next(err);
     });
 };
 
-const createClothingItem = (req, res) => {
+const createClothingItem = (req, res, next) => {
   const { name, weather, imageUrl } = req.body;
   const owner = req.user._id; // Get the user ID from the middleware
   ClothingItem.create({ name, weather, imageUrl, owner })
@@ -26,38 +21,31 @@ const createClothingItem = (req, res) => {
     .catch((err) => {
       console.error(err);
       if (err.name === "ValidationError") {
-        return res.status(VALIDATION_ERROR).send({ message: "Invalid data" });
+        next(new BadRequestError("Invalid data"));
+      } else {
+        next(err);
       }
-      return res
-        .status(DEFAULT_ERROR)
-        .send({ message: "An error has occurred on the server" });
     });
 };
 
-const getClothingItemById = (req, res) => {
+const getClothingItemById = (req, res, next) => {
   const { itemId } = req.params;
   ClothingItem.findById(itemId)
-    .orFail()
-    .then((clothingItem) => {
-      res.status(200).send(clothingItem);
-    })
+    .orFail(() => new NotFoundError("Requested resource not found"))
+    .then((clothingItem) => res.status(200).send(clothingItem))
     .catch((err) => {
       console.error(err);
-      if (err.name === "DocumentNotFoundError") {
-        return res
-          .status(DOCUMENT_NOT_FOUND_ERROR)
-          .send({ message: "Requested resource not found" });
+      if (err instanceof NotFoundError) {
+        next(err);
+      } else if (err.name === "CastError") {
+        next(new BadRequestError("Invalid ID"));
+      } else {
+        next(err);
       }
-      if (err.name === "CastError") {
-        return res.status(CAST_ERROR).send({ message: "Invalid id" });
-      }
-      return res
-        .status(DEFAULT_ERROR)
-        .send({ message: "An error has occurred on the server" });
     });
 };
 
-const likeItem = (req, res) => {
+const likeItem = (req, res, next) => {
   const { itemId } = req.params;
   const userId = req.user._id;
   ClothingItem.findByIdAndUpdate(
@@ -65,32 +53,21 @@ const likeItem = (req, res) => {
     { $addToSet: { likes: userId } },
     { new: true }
   )
-    .orFail()
-    .then((clothingItem) => {
-      if (!clothingItem) {
-        return res
-          .status(DOCUMENT_NOT_FOUND_ERROR)
-          .send({ message: "Requested resource not found" });
-      }
-      return res.status(200).send(clothingItem);
-    })
+    .orFail(() => new NotFoundError("Requested resource not found"))
+    .then((clothingItem) => res.status(200).send(clothingItem))
     .catch((err) => {
       console.error(err);
-      if (err.name === "DocumentNotFoundError") {
-        return res
-          .status(DOCUMENT_NOT_FOUND_ERROR)
-          .send({ message: "Requested resource not found" });
+      if (err instanceof NotFoundError) {
+        next(err);
+      } else if (err.name === "CastError") {
+        next(new BadRequestError("Invalid ID"));
+      } else {
+        next(err);
       }
-      if (err.name === "CastError") {
-        return res.status(CAST_ERROR).send({ message: "Invalid id" });
-      }
-      return res
-        .status(DEFAULT_ERROR)
-        .send({ message: "An error has occurred on the server" });
     });
 };
 
-const dislikeItem = (req, res) => {
+const dislikeItem = (req, res, next) => {
   const { itemId } = req.params;
   const userId = req.user._id;
   ClothingItem.findByIdAndUpdate(
@@ -98,48 +75,29 @@ const dislikeItem = (req, res) => {
     { $pull: { likes: userId } },
     { new: true }
   )
-    .orFail()
-    .then((clothingItem) => {
-      if (!clothingItem) {
-        return res
-          .status(DOCUMENT_NOT_FOUND_ERROR)
-          .send({ message: "Requested resource not found" });
-      }
-      return res.status(200).send(clothingItem);
-    })
+    .orFail(() => new NotFoundError("Requested resource not found"))
+    .then((clothingItem) => res.status(200).send(clothingItem))
     .catch((err) => {
       console.error(err);
-      if (err.name === "DocumentNotFoundError") {
-        return res
-          .status(DOCUMENT_NOT_FOUND_ERROR)
-          .send({ message: "Requested resource not found" });
+      if (err instanceof NotFoundError) {
+        next(err);
+      } else if (err.name === "CastError") {
+        next(new BadRequestError("Invalid ID"));
+      } else {
+        next(err);
       }
-      if (err.name === "CastError") {
-        return res.status(CAST_ERROR).send({ message: "Invalid id" });
-      }
-      return res
-        .status(DEFAULT_ERROR)
-        .send({ message: "An error has occurred on the server" });
     });
 };
 
-const deleteItemById = (req, res) => {
+const deleteItemById = (req, res, next) => {
   const { itemId } = req.params;
   const userId = req.user._id;
 
   ClothingItem.findById(itemId)
-    .orFail()
+    .orFail(() => new NotFoundError("Requested resource not found"))
     .then((clothingItem) => {
-      if (!clothingItem) {
-        return res
-          .status(DOCUMENT_NOT_FOUND_ERROR)
-          .send({ message: "Requested resource not found" });
-      }
-
       if (clothingItem.owner.toString() !== userId.toString()) {
-        return res
-          .status(FORBIDDEN_ERROR)
-          .send({ message: "You are not authorized to delete this item" });
+        throw new ForbiddenError("You are not authorized to delete this item");
       }
 
       return ClothingItem.findByIdAndDelete(itemId).then((deletedItem) =>
@@ -148,17 +106,13 @@ const deleteItemById = (req, res) => {
     })
     .catch((err) => {
       console.error(err);
-      if (err.name === "DocumentNotFoundError") {
-        return res
-          .status(DOCUMENT_NOT_FOUND_ERROR)
-          .send({ message: "Requested resource not found" });
+      if (err instanceof NotFoundError || err instanceof ForbiddenError) {
+        next(err);
+      } else if (err.name === "CastError") {
+        next(new BadRequestError("Invalid ID"));
+      } else {
+        next(err);
       }
-      if (err.name === "CastError") {
-        return res.status(CAST_ERROR).send({ message: "Invalid id" });
-      }
-      return res
-        .status(DEFAULT_ERROR)
-        .send({ message: "An error has occurred on the server" });
     });
 };
 
