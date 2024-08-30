@@ -17,22 +17,22 @@ router.get("/", (req, res, next) => {
   getClothingItems(req, res, next);
 });
 
-router.get("/:itemId", (req, res) => {
-  getClothingItemById(req, res);
+router.get("/:itemId", (req, res, next) => {
+  getClothingItemById(req, res, next);
 });
 
 router.post("/", auth, validateCardBody, createClothingItem);
 
-router.put("/:itemId/likes", auth, validateId, (req, res) => {
-  likeItem(req, res);
+router.put("/:itemId/likes", auth, validateId, (req, res, next) => {
+  likeItem(req, res, next);
 });
 
-router.delete("/:itemId/likes", auth, validateId, (req, res) => {
-  dislikeItem(req, res);
+router.delete("/:itemId/likes", auth, validateId, (req, res, next) => {
+  dislikeItem(req, res, next);
 });
 
-router.delete("/:itemId", auth, validateId, (req, res) => {
-  deleteItemById(req, res);
+router.delete("/:itemId", auth, validateId, (req, res, next) => {
+  deleteItemById(req, res, next);
 });
 
 module.exports = router;
