@@ -13,8 +13,8 @@ const {
   deleteItemById,
 } = require("../controllers/clothingItems");
 
-router.get("/", (req, res) => {
-  getClothingItems(req, res);
+router.get("/", (req, res, next) => {
+  getClothingItems(req, res, next);
 });
 
 router.get("/:itemId", (req, res) => {

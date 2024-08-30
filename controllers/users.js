@@ -10,9 +10,9 @@ const ConflictError = require("../errors/ConflictError");
 const UnauthorizedError = require("../errors/UnauthorizedError");
 
 const createUser = async (req, res, next) => {
-  const { name, avatar, email, password } = req.body;
+  const { name, avatar, email, password: plainPassword } = req.body;
 
-  if (!email || !password) {
+  if (!email || !plainPassword) {
     return next(new BadRequestError("Email and password are required"));
   }
 
@@ -22,7 +22,7 @@ const createUser = async (req, res, next) => {
       throw new ConflictError("Email already exists");
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
     const newUser = await User.create({
       name,
@@ -31,14 +31,15 @@ const createUser = async (req, res, next) => {
       password: hashedPassword,
     });
 
-    const { password: pwd, ...userWithoutPassword } = newUser.toObject();
+    const userWithoutPassword = newUser.toObject();
+    delete userWithoutPassword.password;
 
     return res.status(201).send({ data: userWithoutPassword });
   } catch (err) {
     if (err.name === "ValidationError") {
       next(new BadRequestError("Invalid data"));
     }
-    next(err);
+    return next(err);
   }
 };
 
@@ -47,11 +48,10 @@ const signIn = (req, res, next) => {
 
   // Check if email and password are provided
   if (!email || !password) {
-    next(new BadRequestError("Email and password are required"));
-    return;
+    return next(new BadRequestError("Email and password are required"));
   }
 
-  return User.findUserByCredentials(email, password) // Add return here
+  return User.findUserByCredentials(email, password)
     .then((user) => {
       // Generate JWT
       const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
@@ -65,10 +65,9 @@ const signIn = (req, res, next) => {
       console.error(err);
 
       if (err.message === "Incorrect password or email") {
-        next(new UnauthorizedError("Incorrect email or password"));
-      } else {
-        next(err);
+        return next(new UnauthorizedError("Incorrect email or password"));
       }
+      return next(err);
     });
 };
 

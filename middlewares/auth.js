@@ -8,8 +8,7 @@ const auth = async (req, res, next) => {
     const { authorization } = req.headers;
 
     if (!authorization || !authorization.startsWith("Bearer ")) {
-      next(new UnauthorizedError("Authorization required"));
-      return;
+      return next(new UnauthorizedError("Authorization required"));
     }
 
     const token = authorization.replace("Bearer ", "");
@@ -17,11 +16,9 @@ const auth = async (req, res, next) => {
     const payload = jwt.verify(token, JWT_SECRET);
     req.user = payload;
 
-    next();
-    return "";
+    return next();
   } catch (err) {
-    next(new UnauthorizedError("Authorization required"));
-    return;
+    return next(new UnauthorizedError("Authorization required"));
   }
 };
 

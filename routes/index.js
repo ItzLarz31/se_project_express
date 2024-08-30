@@ -13,7 +13,6 @@ router.post("/signup", validateUser, createUser);
 router.post("/signin", validateLogin, signIn);
 
 router.use((req, res, next) => {
-  res;
   next(new NotFoundError("Requested resource not found"));
 });
 
